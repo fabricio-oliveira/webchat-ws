@@ -71,7 +71,7 @@ func (c *client) readPump() {
 		}
 		messageTxt = bytes.TrimSpace(bytes.Replace(messageTxt, newline, space, -1))
 		logger.Debug("Message received, userId %s: %s", c.User.ID, messageTxt)
-		c.hub.broadcast <- message{Text: string(messageTxt), UserId: c.User.ID, Name: c.User.Name}
+		c.hub.broadcast <- message{Text: string(messageTxt), UserId: c.User.ID, Name: c.User.Name, CreatedAt: time.Now()}
 	}
 }
 

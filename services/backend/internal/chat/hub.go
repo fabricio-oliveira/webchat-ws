@@ -5,6 +5,7 @@ import (
 
 	"fabricio.oliveira.com/websocket/internal/logger"
 	"github.com/google/uuid"
+	"go.starlark.net/lib/time"
 )
 
 type HubID struct {
@@ -13,6 +14,9 @@ type HubID struct {
 
 	// Name of hub
 	Name string `json:"name"`
+
+	// Created
+	CreatedAt time.Time
 }
 
 func (h *HubID) UnmarshalJSON(b []byte) error {
@@ -49,8 +53,9 @@ var serverUser = newUser("Server", "127.0.0.1")
 func newHub(name string) *Hub {
 	return &Hub{
 		HubID: HubID{
-			ID:   uuid.NewString(),
-			Name: name,
+			ID:        uuid.NewString(),
+			Name:      name,
+			CreatedAt: time.Now(),
 		},
 		broadcast:  make(chan message),
 		register:   make(chan *client),
@@ -66,7 +71,7 @@ func (h *Hub) initClient(c *client) {
 	go c.writePump()
 	go c.readPump()
 
-	c.inbound <- message{UserId: serverUser.ID, Name: serverUser.Name, Text: "Welcome"}
+	c.inbound <- message{UserId: serverUser.ID, Name: serverUser.Name, Text: "Welcome", CreatedAt: time.Now()}
 }
 
 func (h *Hub) run() {
