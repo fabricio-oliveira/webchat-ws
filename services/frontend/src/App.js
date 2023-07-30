@@ -66,7 +66,6 @@ function App() {
       const eventsStream = (e) => {
         const payload = JSON.parse(e.data)
         const color = randomColor()
-        console.log("ws", payload, members)
         switch (payload.command) {
           case CMD_WELCOME:
             const member = { id: payload.params.id, userName: payload.params.name, color, active: true }

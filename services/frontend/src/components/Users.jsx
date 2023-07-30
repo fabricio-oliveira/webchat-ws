@@ -44,7 +44,6 @@ const UserName = styled.li`
 `
 
 function Users({ members = [], currentMember }) {
-    console.log("debug", members)
     return (
         <Wrapper>
             <Header>
