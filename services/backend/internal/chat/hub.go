@@ -48,7 +48,7 @@ type Hub struct {
 	unregister chan *client
 }
 
-var serverUser = newUser("Server", "127.0.0.1")
+var serverUser = newUser("SERVER", "127.0.0.1")
 
 func newHub(name string) *Hub {
 	return &Hub{

@@ -24,37 +24,58 @@ const Wrapper = styled.li`
     display: flex;
     margin-top: 10px;
     
-    flex-direction: row-reverse;
-    text-align: ${props => props.isItMe ? 'right' : 'left' };
-    align-items: ${props => props.isItMe ? 'flex-start' : 'flex-end' };
-    flex-direction: ${props => props.$isItMe ? ' row-reverse' : 'row' };;
-` 
+    text-align: ${props => props.$userTye == USER_ME ? 'right' : 'left'};
+    align-items: ${props => props.$userTye == USER_ME ? 'flex-start' : 'flex-end'};
+    flex-direction: ${props => props.$userTye == USER_ME ? 'row-reverse' : 'row'};
+    justify-content: ${props => props.$userTye == USER_SERVER ? 'center' : 'default'};;
+`
 
-const Text =  styled.div`
+const Text = styled.div`
     padding: 10px;
     max-width: 400px;
     margin: 0;
     border-radius: 12px;
-    background-color: ${props => props.$color };
+    background-color: ${props => props.$color};
     color: white;
     display: inline-block;
-` 
+`
 
 
-function Message({ id, user, text, currentUserId, msgMember }) {
-    const isItMe = user.id === currentUserId;
-    console.log("isItMe", msgMember)
+const Notify = styled.div`
+    padding: 5px;
+    max-width: 400px;
+    margin: 0;
+    border-radius: 10px;
+    background-color: #47A7F0;
+    color: black;
+    font-size: 12px;
+    display: inline-block;
+`
+const USER_SERVER = "SERVER"
+const USER_ME = "ME"
+const USER_OTEHRS = "OTHERS"
+
+
+function Message({ id, userId, userName, text, currentUserId, msgMember }) {
+    const userTye = userId === currentUserId ? USER_ME : (userName == USER_SERVER ? USER_SERVER : USER_OTEHRS)
 
     return (
-        <Wrapper key={id} $isItMe={isItMe}>
-            <Avatar
-                style={{ backgroundColor: msgMember.color }}
-            />
+        <Wrapper key={id} $userTye={userTye}>
+
+            {userTye != USER_SERVER && <Avatar
+                style={{ backgroundColor: msgMember?.color }}
+            />}
             <Content>
-                <UserName>
-                    {user.username}
-                </UserName>
-                <Text $color={msgMember.color}>{text}</Text>
+                {userTye != USER_SERVER &&
+                    <UserName>
+                        {userName}
+                    </UserName>}
+
+                {userTye === USER_SERVER ?
+                    <Notify>{text}</Notify> :
+                    <Text $color={msgMember?.color}>{text}</Text>
+                }
+
             </Content>
         </Wrapper>
     );

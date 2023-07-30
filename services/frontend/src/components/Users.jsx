@@ -39,12 +39,12 @@ const Ul = styled.ul`
 const UserName = styled.li`
     display: flex;
     margin-top: 10px;
-    font-style: ${ props => props.$isItMe? "bold" : "normal" };
+    font-weight: ${ props => props.$isItMe? "bold" : "normal" };
     background-color: ${ props => props.$bgColor };
 `
 
 function Users({ members = [], currentMember }) {
-    // console.log("key problem", members)
+    console.log("debug", members)
     return (
         <Wrapper>
             <Header>
@@ -52,11 +52,11 @@ function Users({ members = [], currentMember }) {
             </Header>
             <Body>
                 <Ul>
-                    {members.map(({id, username, color}) => (
+                    {members.filter(({active}) => active).map(({id, userName, color}) => (
                         <UserName key={id} 
                             $isItMe={currentMember.id === id}
                             $bgColor={color} >
-                            {username}
+                            {userName}
                         </UserName>
                     ))}
                 </Ul>

@@ -3,6 +3,7 @@ package chat
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"fabricio.oliveira.com/websocket/internal/logger"
@@ -130,6 +131,7 @@ func (c *client) notifyLeave() {
 			"id":   c.ID,
 			"name": c.Name,
 		},
+		Text:      fmt.Sprintf("%s leave the chat", c.Name),
 		Command:   CMD_USER_LEAVE,
 		TimeStamp: time.Now()}
 }
@@ -141,6 +143,7 @@ func (c *client) notifyEnter() {
 		UserId:  serverUser.ID,
 		Name:    serverUser.Name,
 		Command: CMD_NEW_USER,
+		Text:    fmt.Sprintf("%s joined the chat", c.Name),
 		Params: map[string]interface{}{
 			"id":   c.ID,
 			"name": c.Name,
@@ -168,7 +171,7 @@ func (c *client) notifyWelcome() {
 		ID:      uuid.NewString(),
 		UserId:  serverUser.ID,
 		Name:    serverUser.Name,
-		Text:    "Welcome",
+		Text:    fmt.Sprintf("Welcome %s", c.Name),
 		Command: CMD_WELCOME,
 		Params: map[string]interface{}{
 			"id":    c.ID,

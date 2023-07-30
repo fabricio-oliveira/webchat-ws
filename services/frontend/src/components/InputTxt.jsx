@@ -14,16 +14,19 @@ const Button = styled.button`
 
 const Form = styled.form`
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   width: 100%;
-  justify-content: space-between;
-  max-width: ${ props => props.$maxWidth  ?? "825px"};
-  margin: 0 auto 40px;
+  justify-content: space-around;
+  max-width: ${ props => props.$maxWidth  ?? "850px"};
+  margin: 0 auto 10px;
 `
 
 const Input = styled.input`
   padding: 5px;
   font-size: 16px;
   border-radius: 8px;
+  width: 60%;
   border: 1px solid orangered;
   flex-grow: ${ props => props.$flexGrow  ?? 1};
 `
@@ -33,8 +36,6 @@ function InputTxt({onSendMessage, buttonName, placeholder, styled={}}) {
   
   const onChange = (e) =>{
     setText(e.target.value);
-    
-    // console.log("onChange", e)
   }
 
   const onSubmit = (e) => {

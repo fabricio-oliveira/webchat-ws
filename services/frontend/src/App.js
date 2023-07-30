@@ -40,6 +40,15 @@ const Center = styled.div`
   flex-direction: column;
 `
 
+const CMD_WELCOME = "WELCOME"
+const CMD_NEW_USER = "NEW_USER"
+const CMD_USER_LEAVE = "USER_LEAVE"
+const CMD_TEXT = "TEXT"
+
+const MAX_MESSAGES = 50
+
+
+
 
 function App() {
   const [currentMember, setCurrentMember] = useState({})
@@ -48,68 +57,93 @@ function App() {
   const [messages, setMessages] = useState([])
 
 
-  const  onSendMesage = (text) => {
-    // console.log("send message", )
+  const onSendMesage = (text) => {
     socket.send(text)
   }
 
   useEffect(() => {
-    if (currentMember.userName) {
+    if (currentMember?.userName) {
       const eventsStream = (e) => {
         const payload = JSON.parse(e.data)
         const color = randomColor()
         console.log("ws", payload, members)
         switch (payload.command) {
-          case "WELCOME":
-            setCurrentMember({ id: payload.params.id, userName: payload.params.name, color })
-            setMembers([
-              { id: payload.params.id, username: payload.params.name, color },
-              ...(payload.params.users.map(({ name, ...rest }) => ({ ...rest, username: name, color: randomColor() })))])
-            break;
-          case "NEW_USER":
-            setMembers((arr) => [...arr, { id: payload.params.id, username: payload.params.name, color }])
-            break;
-          case "USER_LEAVE":
-            const userId = payload.params.id
-            setMembers((arr) => arr.filter(({ id }) => id !== userId))
-            break;
-          case "TEXT":
+          case CMD_WELCOME:
+            const member = { id: payload.params.id, userName: payload.params.name, color, active: true }
+            setCurrentMember(member)
+            setMembers([ member,
+              ...(payload.params.users.map(({ name, ...rest }) => ({ ...rest, userName: name, active: true, color: randomColor() })))])
             setMessages((arr) => [
-              ...arr,
               {
                 id: payload.id,
-                user: {
-                  id: payload.user_id,
-                  username: payload.name,
-                },
+                userId: payload.user_id,
+                userName: payload.name,
                 text: payload.text,
-                username: payload.name,
                 createdAt: payload.created_at
-              }])
+              },
+              ...arr
+            ])
+            break;
+          case CMD_NEW_USER:
+            setMembers((arr) => [...arr, { id: payload.params.id, userName: payload.params.name, active: true, color }])
+            setMessages((arr) => [
+              {
+                id: payload.id,
+                userId: payload.user_id,
+                userName: payload.name,
+                text: payload.text,
+                createdAt: payload.created_at
+              },
+              ...arr
+            ])
+            break;
+          case CMD_USER_LEAVE:
+            const userId = payload.params.id
+            setMembers((arr) => arr.map(({ id, active, ...rest }) => ({ id, ...rest, active : id !== userId ? active : false })))
+            setMessages((arr) => [
+              {
+                id: payload.id,
+                userId: payload.user_id,
+                userName: payload.name,
+                text: payload.text,
+                createdAt: payload.created_at
+              },
+              ...arr
+            ])
+            break;
+          case CMD_TEXT:
+            setMessages((arr) => [
+              {
+                id: payload.id,
+                userId: payload.user_id,
+                userName: payload.name,
+                text: payload.text,
+                createdAt: payload.created_at
+              }, ...arr.slice(0, MAX_MESSAGES)])
             break;
           default:
             console.log("command not found", payload.command)
         }
       }
 
-      const sw = wsConnection(currentMember.userName, { onMessage: eventsStream })
+      const sw = wsConnection(currentMember?.userName, { onMessage: eventsStream })
       setSocket(sw)
     }
     return () => socket?.close()
-  }, [currentMember.userName])
+  }, [currentMember?.userName])
 
   return (
     <Wrapper>
-      {!currentMember.userName &&
+      {!currentMember?.userName &&
         (
-          <Modal header={"Credentials"} styled={{ width: "25%" }}>
+          <Modal header={"nick name"} styled={{ width: "25%" }}>
             <InputTxt
               buttonName='Enter'
               styled={{
                 flexGrow: 0,
-                maxWidth: "200px"
+                maxWidth: "300px"
               }}
-              placeholder="Enter your user name"
+              placeholder="Enter user name"
               onSendMessage={(name) => setCurrentMember({ userName: name })}
             />
 

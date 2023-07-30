@@ -17,22 +17,20 @@ const Ul = styled.ul`
     margin: 0 auto;
     list-style: none;
     overflow: auto;
-` 
+`
 
-function Messages({messages, currentMember, members}) {
-  
-  console.log("messges", messages)
-  
+function Messages({ messages, currentMember, members }) {
   return (
     <Ul>
-        {messages.map(m => { 
-          const msgMember = members.find(({id}) => id === m.user.id)
-          return Message({ ...m, msgMember, currentUserId: currentMember.id})
+      {
+        messages.map(m => {
+          const msgMember = members.find(({ id }) => id === m.userId)
+          return Message({ ...m, msgMember, currentUserId: currentMember.id })
         })
       }
-      </Ul>
-    );
-  }
+    </Ul>
+  );
+}
 
 
 
