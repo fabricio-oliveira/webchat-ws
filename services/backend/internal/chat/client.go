@@ -3,7 +3,6 @@ package chat
 import (
 	"bytes"
 	"encoding/json"
-	"log"
 	"time"
 
 	"fabricio.oliveira.com/websocket/internal/logger"
@@ -57,6 +56,7 @@ func newClient(hub *Hub, conn *websocket.Conn, name string) *client {
 func (c *client) readPump() {
 	defer func() {
 		c.hub.unregister <- c
+		c.notifyLeave()
 		c.conn.Close()
 	}()
 	c.conn.SetReadLimit(maxMessageSize)
@@ -66,7 +66,7 @@ func (c *client) readPump() {
 		_, messageTxt, err := c.conn.ReadMessage()
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				log.Printf("error: %v", err)
+				logger.Error("Unexpected close %+v", err)
 			}
 			break
 		}
@@ -121,15 +121,21 @@ func (c *client) writePump() {
 }
 
 func (c *client) notifyLeave() {
+	logger.Debug("notifyLeave %s", c.Name)
 	c.hub.broadcast <- message{
-		ID:        uuid.NewString(),
-		UserId:    c.User.ID,
-		Name:      c.User.Name,
+		ID:     uuid.NewString(),
+		UserId: serverUser.ID,
+		Name:   serverUser.Name,
+		Params: map[string]interface{}{
+			"id":   c.ID,
+			"name": c.Name,
+		},
 		Command:   CMD_USER_LEAVE,
 		TimeStamp: time.Now()}
 }
 
 func (c *client) notifyEnter() {
+	logger.Debug("notifyEnter %s", c.Name)
 	c.hub.broadcast <- message{
 		ID:      uuid.NewString(),
 		UserId:  serverUser.ID,
@@ -144,6 +150,7 @@ func (c *client) notifyEnter() {
 }
 
 func (c *client) notifyWelcome() {
+	logger.Debug("notifyEnter  %s", c.Name)
 	users := []map[string]interface{}{}
 	for cl := range c.hub.clients {
 		if c.ID == cl.ID {

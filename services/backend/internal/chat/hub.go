@@ -70,6 +70,9 @@ func (h *Hub) initClient(c *client) {
 
 	go c.writePump()
 	go c.readPump()
+
+	c.notifyWelcome()
+	c.notifyEnter()
 }
 
 func (h *Hub) run() {
@@ -78,14 +81,11 @@ func (h *Hub) run() {
 		case client := <-h.register:
 			logger.Debug("register new client %+v", client)
 			h.clients[client] = true
-			client.notifyWelcome()
-			client.notifyEnter()
 		case client := <-h.unregister:
 			logger.Debug("unregister client %+v", client)
 			if _, ok := h.clients[client]; ok {
 				delete(h.clients, client)
 				close(client.inbound)
-				client.notifyLeave()
 			}
 		case message := <-h.broadcast:
 			for client, more := range h.clients {
@@ -103,7 +103,8 @@ func (h *Hub) run() {
 func rules(c *client, m *message) {
 	logger.Debug("rules message received: %+v, %+v", c.User, m)
 	switch m.Command {
-	case CMD_NEW_USER:
+	case CMD_NEW_USER, CMD_USER_LEAVE:
+
 		id := m.Params["id"].(string)
 		if c.User.ID != id {
 			c.inbound <- *m

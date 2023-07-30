@@ -67,6 +67,10 @@ function App() {
         case "NEW_USER":
           setMembers((arr) => [...arr, {id: payload.params.id, username: payload.params.name, color }])
           break;
+        case "USER_LEAVE":
+          const userId = payload.params.id
+          setMembers((arr) => arr.filter(({id}) => id !== userId ))
+          break;
         case "TEXT":
           setMessages((arr) => [
             ...arr, 
