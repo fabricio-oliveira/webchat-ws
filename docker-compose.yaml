@@ -9,3 +9,18 @@ services:
     volumes:
       - ./services/backend/:/app
     restart: on-failure
+    networks:
+      - ws_chat
+  frontend:
+    build:
+      context: ./services/frontend/
+      dockerfile: ./Dockerfile
+    ports:
+      - 3000:3000
+    volumes:
+      - ./services/frontend/:/app
+    restart: on-failure
+    networks:
+      - ws_chat
+networks:
+  ws_chat:

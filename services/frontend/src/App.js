@@ -9,7 +9,7 @@ import Input from "./components/InputTxt";
 import Modal from './components/Modal';
 import InputTxt from './components/InputTxt';
 import Users from './components/Users'
-import {randomColor} from './util'
+import { randomColor } from './util'
 
 const Wrapper = styled.div`
     display: flex;
@@ -40,10 +40,6 @@ const Center = styled.div`
   flex-direction: column;
 `
 
-function onSendMesage(text) {
-  console.log("send message", text)
-}
-
 
 function App() {
   const [currentMember, setCurrentMember] = useState({})
@@ -51,46 +47,51 @@ function App() {
   const [members, setMembers] = useState([])
   const [messages, setMessages] = useState([])
 
- 
-  useEffect(() => {
-    const eventsStream = (e) => {
-      const payload = JSON.parse(e.data)
-      const color = randomColor()
-      console.log("ws", payload, members)
-      switch (payload.command) {
-        case "WELCOME":
-          setCurrentMember({id: payload.params.id, userName: payload.params.name, color })
-          setMembers([
-            {id: payload.params.id, username: payload.params.name, color },
-            ...(payload.params.users.map(({name, ...rest}) => ({...rest, username: name, color: randomColor()})))])
-          break;
-        case "NEW_USER":
-          setMembers((arr) => [...arr, {id: payload.params.id, username: payload.params.name, color }])
-          break;
-        case "USER_LEAVE":
-          const userId = payload.params.id
-          setMembers((arr) => arr.filter(({id}) => id !== userId ))
-          break;
-        case "TEXT":
-          setMessages((arr) => [
-            ...arr, 
-            {
-              id: payload.id,
-              user: { 
-                id: payload.user_id,
-                username: payload.name,
-              },
-              text: payload.text,
-              username: payload.name,
-              createdAt: payload.created_at
-            }])
-          break;
-        default:
-          console.log("command not found", payload.command)
-      }
-    }
 
+  const  onSendMesage = (text) => {
+    // console.log("send message", )
+    socket.send(text)
+  }
+
+  useEffect(() => {
     if (currentMember.userName) {
+      const eventsStream = (e) => {
+        const payload = JSON.parse(e.data)
+        const color = randomColor()
+        console.log("ws", payload, members)
+        switch (payload.command) {
+          case "WELCOME":
+            setCurrentMember({ id: payload.params.id, userName: payload.params.name, color })
+            setMembers([
+              { id: payload.params.id, username: payload.params.name, color },
+              ...(payload.params.users.map(({ name, ...rest }) => ({ ...rest, username: name, color: randomColor() })))])
+            break;
+          case "NEW_USER":
+            setMembers((arr) => [...arr, { id: payload.params.id, username: payload.params.name, color }])
+            break;
+          case "USER_LEAVE":
+            const userId = payload.params.id
+            setMembers((arr) => arr.filter(({ id }) => id !== userId))
+            break;
+          case "TEXT":
+            setMessages((arr) => [
+              ...arr,
+              {
+                id: payload.id,
+                user: {
+                  id: payload.user_id,
+                  username: payload.name,
+                },
+                text: payload.text,
+                username: payload.name,
+                createdAt: payload.created_at
+              }])
+            break;
+          default:
+            console.log("command not found", payload.command)
+        }
+      }
+
       const sw = wsConnection(currentMember.userName, { onMessage: eventsStream })
       setSocket(sw)
     }
@@ -109,7 +110,7 @@ function App() {
                 maxWidth: "200px"
               }}
               placeholder="Enter your user name"
-              onSendMessage={(name) =>  setCurrentMember({ userName: name })}
+              onSendMessage={(name) => setCurrentMember({ userName: name })}
             />
 
           </Modal>
@@ -120,9 +121,9 @@ function App() {
         <h1>WebSocket Chat App</h1>
       </Header>
       <Body>
-        <Users 
-        members={members}
-        currentMember={currentMember}
+        <Users
+          members={members}
+          currentMember={currentMember}
         />
         <Center>
           <Messages

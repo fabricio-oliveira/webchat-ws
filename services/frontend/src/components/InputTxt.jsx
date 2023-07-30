@@ -16,7 +16,7 @@ const Form = styled.form`
   display: flex;
   width: 100%;
   justify-content: space-between;
-  max-width: ${ props => props.$maxWidth  ?? "900px"};
+  max-width: ${ props => props.$maxWidth  ?? "825px"};
   margin: 0 auto 40px;
 `
 

@@ -4,16 +4,19 @@ import styled from "styled-components"
 import Message from './Message'
 
 const Ul = styled.ul`
+    display: flex;
+    flex-direction: column-reverse;
+    flex-grow: 1;
+    
     padding: 20px 0;
+    padding-left: 0;
     max-width: 900px;
     height: 100%;
     width: 80%;
+
     margin: 0 auto;
     list-style: none;
-    padding-left: 0;
-    flex-grow: 1;
     overflow: auto;
-    /* flex-direction: column-reverse; */
 ` 
 
 function Messages({messages, currentMember, members}) {
