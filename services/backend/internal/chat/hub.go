@@ -70,43 +70,6 @@ func (h *Hub) initClient(c *client) {
 
 	go c.writePump()
 	go c.readPump()
-
-	users := []map[string]interface{}{}
-	for cl := range c.hub.clients {
-		if c.ID == cl.ID {
-			continue
-		}
-
-		users = append(users,
-			map[string]interface{}{
-				"id":   cl.ID,
-				"name": cl.Name,
-			})
-	}
-
-	c.inbound <- message{
-		ID:      uuid.NewString(),
-		UserId:  serverUser.ID,
-		Name:    serverUser.Name,
-		Text:    "Welcome",
-		Command: CMD_WELCOME,
-		Params: map[string]interface{}{
-			"id":    c.ID,
-			"name":  c.Name,
-			"users": users,
-		},
-		CreatedAt: time.Now()}
-
-	c.hub.broadcast <- message{
-		ID:      uuid.NewString(),
-		UserId:  serverUser.ID,
-		Name:    serverUser.Name,
-		Command: CMD_NEW_USER,
-		Params: map[string]interface{}{
-			"id":   c.ID,
-			"name": c.Name,
-		},
-		CreatedAt: time.Now()}
 }
 
 func (h *Hub) run() {
@@ -115,11 +78,14 @@ func (h *Hub) run() {
 		case client := <-h.register:
 			logger.Debug("register new client %+v", client)
 			h.clients[client] = true
+			client.notifyWelcome()
+			client.notifyEnter()
 		case client := <-h.unregister:
 			logger.Debug("unregister client %+v", client)
 			if _, ok := h.clients[client]; ok {
 				delete(h.clients, client)
 				close(client.inbound)
+				client.notifyLeave()
 			}
 		case message := <-h.broadcast:
 			for client, more := range h.clients {

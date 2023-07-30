@@ -51,10 +51,7 @@ function App() {
   const [members, setMembers] = useState([])
   const [messages, setMessages] = useState([])
 
-  console.log("members", members)
-
  
-
   useEffect(() => {
     const eventsStream = (e) => {
       const payload = JSON.parse(e.data)
@@ -62,7 +59,6 @@ function App() {
       console.log("ws", payload, members)
       switch (payload.command) {
         case "WELCOME":
-          console.log("WELCOME", payload)
           setCurrentMember({id: payload.params.id, userName: payload.params.name, color })
           setMembers([
             {id: payload.params.id, username: payload.params.name, color },
@@ -72,7 +68,6 @@ function App() {
           setMembers((arr) => [...arr, {id: payload.params.id, username: payload.params.name, color }])
           break;
         case "TEXT":
-          console.log("TEXT", payload.user_id, members)
           setMessages((arr) => [
             ...arr, 
             {

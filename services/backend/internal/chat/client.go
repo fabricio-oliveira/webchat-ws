@@ -72,13 +72,7 @@ func (c *client) readPump() {
 		}
 		messageTxt = bytes.TrimSpace(bytes.Replace(messageTxt, newline, space, -1))
 		logger.Debug("Read Message %s, %+v", c.User.Name, string(messageTxt))
-		c.hub.broadcast <- message{
-			ID:        uuid.NewString(),
-			Text:      string(messageTxt),
-			UserId:    c.User.ID,
-			Name:      c.User.Name,
-			Command:   CMD_TEXT,
-			CreatedAt: time.Now()}
+		c.notifyText(messageTxt)
 	}
 }
 
@@ -113,21 +107,6 @@ func (c *client) writePump() {
 
 			w.Write(data)
 
-			// Add queued chat messages to the current websocket message.
-			// n := len(c.inbound)
-			// for i := 0; i < n; i++ {
-			// 	otherMessageTxt := <-c.inbound
-			// 	data, err = json.Marshal(otherMessageTxt)
-			// 	if err != nil {
-			// 		// The hub closed the channel.
-			// 		c.conn.WriteMessage(websocket.CloseMessage, []byte{})
-			// 		return
-			// 	}
-
-			// 	w.Write(newline)
-			// 	w.Write(data)
-			// }
-
 			if err := w.Close(); err != nil {
 				return
 			}
@@ -138,5 +117,67 @@ func (c *client) writePump() {
 				return
 			}
 		}
+	}
+}
+
+func (c *client) notifyLeave() {
+	c.hub.broadcast <- message{
+		ID:        uuid.NewString(),
+		UserId:    c.User.ID,
+		Name:      c.User.Name,
+		Command:   CMD_USER_LEAVE,
+		TimeStamp: time.Now()}
+}
+
+func (c *client) notifyEnter() {
+	c.hub.broadcast <- message{
+		ID:      uuid.NewString(),
+		UserId:  serverUser.ID,
+		Name:    serverUser.Name,
+		Command: CMD_NEW_USER,
+		Params: map[string]interface{}{
+			"id":   c.ID,
+			"name": c.Name,
+		},
+		TimeStamp: time.Now(),
+	}
+}
+
+func (c *client) notifyWelcome() {
+	users := []map[string]interface{}{}
+	for cl := range c.hub.clients {
+		if c.ID == cl.ID {
+			continue
+		}
+
+		users = append(users,
+			map[string]interface{}{
+				"id":   cl.ID,
+				"name": cl.Name,
+			})
+	}
+
+	c.inbound <- message{
+		ID:      uuid.NewString(),
+		UserId:  serverUser.ID,
+		Name:    serverUser.Name,
+		Text:    "Welcome",
+		Command: CMD_WELCOME,
+		Params: map[string]interface{}{
+			"id":    c.ID,
+			"name":  c.Name,
+			"users": users,
+		},
+		TimeStamp: time.Now()}
+}
+
+func (c *client) notifyText(txt []byte) {
+	c.hub.broadcast <- message{
+		ID:        uuid.NewString(),
+		Text:      string(txt),
+		UserId:    c.User.ID,
+		Name:      c.User.Name,
+		Command:   CMD_TEXT,
+		TimeStamp: time.Now(),
 	}
 }

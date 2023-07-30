@@ -3,9 +3,10 @@ package chat
 import "time"
 
 const (
-	CMD_NEW_USER = "NEW_USER"
-	CMD_WELCOME  = "WELCOME"
-	CMD_TEXT     = "TEXT"
+	CMD_NEW_USER   = "NEW_USER"
+	CMD_USER_LEAVE = "USER_LEAVE"
+	CMD_WELCOME    = "WELCOME"
+	CMD_TEXT       = "TEXT"
 )
 
 type message struct {
@@ -19,5 +20,5 @@ type message struct {
 	Text   string                 `json:"text"`
 	Params map[string]interface{} `json:"params"`
 
-	CreatedAt time.Time `json:"created_at"`
+	TimeStamp time.Time `json:"created_at"`
 }
