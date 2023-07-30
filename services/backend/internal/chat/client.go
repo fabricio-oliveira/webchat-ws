@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"fabricio.oliveira.com/websocket/internal/logger"
+	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 )
 
@@ -70,8 +71,14 @@ func (c *client) readPump() {
 			break
 		}
 		messageTxt = bytes.TrimSpace(bytes.Replace(messageTxt, newline, space, -1))
-		logger.Debug("Message received, userId %s: %s", c.User.ID, messageTxt)
-		c.hub.broadcast <- message{Text: string(messageTxt), UserId: c.User.ID, Name: c.User.Name, CreatedAt: time.Now()}
+		logger.Debug("Read Message %s, %+v", c.User.Name, string(messageTxt))
+		c.hub.broadcast <- message{
+			ID:        uuid.NewString(),
+			Text:      string(messageTxt),
+			UserId:    c.User.ID,
+			Name:      c.User.Name,
+			Command:   CMD_TEXT,
+			CreatedAt: time.Now()}
 	}
 }
 
@@ -84,7 +91,7 @@ func (c *client) writePump() {
 	for {
 		select {
 		case message, ok := <-c.inbound:
-			logger.Debug("received Message %+v, %v", string(message.Text), ok)
+			logger.Debug("write Message %s, %+v", c.User.Name, string(message.Text))
 			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if !ok {
 				// The hub closed the channel.
@@ -106,7 +113,7 @@ func (c *client) writePump() {
 
 			w.Write(data)
 
-			// // Add queued chat messages to the current websocket message.
+			// Add queued chat messages to the current websocket message.
 			// n := len(c.inbound)
 			// for i := 0; i < n; i++ {
 			// 	otherMessageTxt := <-c.inbound
@@ -125,7 +132,7 @@ func (c *client) writePump() {
 				return
 			}
 		case <-ticker.C:
-			logger.Debug("ticker")
+			logger.Debug("ticker %+v", time.Now())
 			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if err := c.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
 				return

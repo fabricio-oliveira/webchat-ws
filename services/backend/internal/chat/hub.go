@@ -2,10 +2,10 @@ package chat
 
 import (
 	"encoding/json"
+	"time"
 
 	"fabricio.oliveira.com/websocket/internal/logger"
 	"github.com/google/uuid"
-	"go.starlark.net/lib/time"
 )
 
 type HubID struct {
@@ -71,7 +71,42 @@ func (h *Hub) initClient(c *client) {
 	go c.writePump()
 	go c.readPump()
 
-	c.inbound <- message{UserId: serverUser.ID, Name: serverUser.Name, Text: "Welcome", CreatedAt: time.Now()}
+	users := []map[string]interface{}{}
+	for cl := range c.hub.clients {
+		if c.ID == cl.ID {
+			continue
+		}
+
+		users = append(users,
+			map[string]interface{}{
+				"id":   cl.ID,
+				"name": cl.Name,
+			})
+	}
+
+	c.inbound <- message{
+		ID:      uuid.NewString(),
+		UserId:  serverUser.ID,
+		Name:    serverUser.Name,
+		Text:    "Welcome",
+		Command: CMD_WELCOME,
+		Params: map[string]interface{}{
+			"id":    c.ID,
+			"name":  c.Name,
+			"users": users,
+		},
+		CreatedAt: time.Now()}
+
+	c.hub.broadcast <- message{
+		ID:      uuid.NewString(),
+		UserId:  serverUser.ID,
+		Name:    serverUser.Name,
+		Command: CMD_NEW_USER,
+		Params: map[string]interface{}{
+			"id":   c.ID,
+			"name": c.Name,
+		},
+		CreatedAt: time.Now()}
 }
 
 func (h *Hub) run() {
@@ -87,14 +122,27 @@ func (h *Hub) run() {
 				close(client.inbound)
 			}
 		case message := <-h.broadcast:
-			for client := range h.clients {
-				select {
-				case client.inbound <- message:
-				default:
+			for client, more := range h.clients {
+				if more {
+					rules(client, &message)
+				} else {
 					close(client.inbound)
 					delete(h.clients, client)
 				}
 			}
 		}
+	}
+}
+
+func rules(c *client, m *message) {
+	logger.Debug("rules message received: %+v, %+v", c.User, m)
+	switch m.Command {
+	case CMD_NEW_USER:
+		id := m.Params["id"].(string)
+		if c.User.ID != id {
+			c.inbound <- *m
+		}
+	default:
+		c.inbound <- *m
 	}
 }

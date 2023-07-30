@@ -2,12 +2,22 @@ package chat
 
 import "time"
 
+const (
+	CMD_NEW_USER = "NEW_USER"
+	CMD_WELCOME  = "WELCOME"
+	CMD_TEXT     = "TEXT"
+)
+
 type message struct {
-	UserId string
+	ID string `json:"id"`
 
-	Name string
+	UserId string `json:"user_id"`
+	Name   string `json:"name"`
 
-	Text string
+	Command string `json:"command"`
 
-	CreatedAt time.Time
+	Text   string                 `json:"text"`
+	Params map[string]interface{} `json:"params"`
+
+	CreatedAt time.Time `json:"created_at"`
 }
