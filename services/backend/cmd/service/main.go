@@ -7,6 +7,7 @@ import (
 	"syscall"
 	"time"
 
+	"fabricio.oliveira.com/websocket/internal/chat"
 	"fabricio.oliveira.com/websocket/internal/config"
 	"fabricio.oliveira.com/websocket/internal/logger"
 	"github.com/gin-gonic/gin"
@@ -36,6 +37,8 @@ func main() {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
+
+	chat.Close()
 
 	if err := srv.Shutdown(ctx); err != nil {
 		logger.Fatal("Server Forced to shutdown")

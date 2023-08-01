@@ -40,7 +40,7 @@ type client struct {
 	conn *websocket.Conn
 
 	// Buffered channel of outbound messages.
-	inbound chan message
+	inbound chan *message
 
 	User
 }
@@ -49,7 +49,7 @@ func newClient(hub *Hub, conn *websocket.Conn, name string) *client {
 	return &client{
 		hub:     hub,
 		conn:    conn,
-		inbound: make(chan message, 32),
+		inbound: make(chan *message, 32),
 		User:    *newUser(name, conn.RemoteAddr().String()),
 	}
 }
@@ -69,6 +69,7 @@ func (c *client) readPump() {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
 				logger.Error("Unexpected close %+v", err)
 			}
+			logger.Debug("readpump close %+v", c.ID)
 			break
 		}
 		messageTxt = bytes.TrimSpace(bytes.Replace(messageTxt, newline, space, -1))
@@ -86,13 +87,14 @@ func (c *client) writePump() {
 	for {
 		select {
 		case message, ok := <-c.inbound:
-			logger.Debug("write Message %s, %+v", c.User.Name, string(message.Text))
 			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if !ok {
 				// The hub closed the channel.
 				c.conn.WriteMessage(websocket.CloseMessage, []byte{})
+				logger.Debug("writePump close %+v", c.ID)
 				return
 			}
+			logger.Debug("write Message %s, %+v", c.User.Name, string(message.Text))
 
 			w, err := c.conn.NextWriter(websocket.TextMessage)
 			if err != nil {
@@ -123,7 +125,7 @@ func (c *client) writePump() {
 
 func (c *client) notifyLeave() {
 	logger.Debug("notifyLeave %s", c.Name)
-	c.hub.broadcast <- message{
+	c.hub.broadcast <- &message{
 		ID:     uuid.NewString(),
 		UserId: serverUser.ID,
 		Name:   serverUser.Name,
@@ -138,7 +140,7 @@ func (c *client) notifyLeave() {
 
 func (c *client) notifyEnter() {
 	logger.Debug("notifyEnter %s", c.Name)
-	c.hub.broadcast <- message{
+	c.hub.broadcast <- &message{
 		ID:      uuid.NewString(),
 		UserId:  serverUser.ID,
 		Name:    serverUser.Name,
@@ -167,7 +169,7 @@ func (c *client) notifyWelcome() {
 			})
 	}
 
-	c.inbound <- message{
+	c.inbound <- &message{
 		ID:      uuid.NewString(),
 		UserId:  serverUser.ID,
 		Name:    serverUser.Name,
@@ -182,7 +184,7 @@ func (c *client) notifyWelcome() {
 }
 
 func (c *client) notifyText(txt []byte) {
-	c.hub.broadcast <- message{
+	c.hub.broadcast <- &message{
 		ID:        uuid.NewString(),
 		Text:      string(txt),
 		UserId:    c.User.ID,

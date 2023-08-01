@@ -39,16 +39,17 @@ type Hub struct {
 	clients map[*client]bool
 
 	// Inbound messages from the clients.
-	broadcast chan message
+	broadcast chan *message
 
 	// Register requests from the clients.
 	register chan *client
 
 	// Unregister requests from clients.
 	unregister chan *client
-}
 
-var serverUser = newUser("SERVER", "127.0.0.1")
+	// Stop hub
+	stop chan struct{}
+}
 
 func newHub(name string) *Hub {
 	return &Hub{
@@ -57,10 +58,11 @@ func newHub(name string) *Hub {
 			Name:      name,
 			CreatedAt: time.Now(),
 		},
-		broadcast:  make(chan message),
+		broadcast:  make(chan *message),
 		register:   make(chan *client),
 		unregister: make(chan *client),
 		clients:    make(map[*client]bool),
+		stop:       make(chan struct{}),
 	}
 }
 
@@ -76,6 +78,12 @@ func (h *Hub) initClient(c *client) {
 }
 
 func (h *Hub) run() {
+	defer func() {
+		close(h.broadcast)
+		close(h.unregister)
+		close(h.register)
+		logger.Debug("close hub %+v", h.ID)
+	}()
 	for {
 		select {
 		case client := <-h.register:
@@ -90,14 +98,27 @@ func (h *Hub) run() {
 		case message := <-h.broadcast:
 			for client, more := range h.clients {
 				if more {
-					rules(client, &message)
+					rules(client, message)
 				} else {
 					close(client.inbound)
 					delete(h.clients, client)
 				}
 			}
+		case _ = <-h.stop:
+			return
 		}
 	}
+}
+
+func (h *Hub) close() {
+	// close all client socket connections
+	for client := range h.clients {
+		client.conn.Close()
+		close(client.inbound)
+	}
+
+	// stop hub
+	close(h.stop)
 }
 
 func rules(c *client, m *message) {
@@ -107,9 +128,9 @@ func rules(c *client, m *message) {
 
 		id := m.Params["id"].(string)
 		if c.User.ID != id {
-			c.inbound <- *m
+			c.inbound <- m
 		}
 	default:
-		c.inbound <- *m
+		c.inbound <- m
 	}
 }

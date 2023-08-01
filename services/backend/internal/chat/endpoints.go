@@ -16,15 +16,7 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-var defaultHub *Hub = newHub("default")
-
-var hubs map[string]*Hub = map[string]*Hub{defaultHub.ID: defaultHub}
-
-func init() {
-	go defaultHub.run()
-}
-
-func chatWs(c *gin.Context) {
+func wsHub(c *gin.Context) {
 	hubID := c.Param("id")
 	logger.Debug("hub ID %s", hubID)
 	var hub *Hub
@@ -56,7 +48,7 @@ func chatWs(c *gin.Context) {
 	hub.initClient(client)
 }
 
-func listChatRooms(c *gin.Context) {
+func listHub(c *gin.Context) {
 	result := []HubID{}
 
 	for _, v := range hubs {
@@ -66,7 +58,7 @@ func listChatRooms(c *gin.Context) {
 	c.JSON(http.StatusOK, result)
 }
 
-func createChatRoom(c *gin.Context) {
+func createHub(c *gin.Context) {
 	hubID := HubID{}
 
 	err := c.ShouldBindJSON(&hubID)
@@ -75,13 +67,40 @@ func createChatRoom(c *gin.Context) {
 	}
 
 	hub := newHub(hubID.Name)
+	go hub.run()
 
 	hubs[hub.ID] = hub
 	c.JSON(http.StatusOK, hub.HubID)
 }
 
+func deleteHub(c *gin.Context) {
+	id := c.Param("id")
+	logger.Debug("hub ID %s", id)
+
+	hub := hubs[id]
+	if hub == nil {
+		c.JSON(http.StatusNotFound, map[string]string{"msg": "hub not found"})
+		return
+	}
+
+	if hub.Name == DEFAULT_HUB_NAME {
+		c.JSON(http.StatusForbidden, map[string]string{"msg": "protected hub, not allowed to delete"})
+		return
+	}
+
+	hub.close()
+	c.Status(http.StatusOK)
+}
+
 func Routes(router *gin.RouterGroup) {
-	router.GET("/chats/:id", chatWs)
-	router.GET("/chats", listChatRooms)
-	router.POST("/chats", createChatRoom)
+	router.GET("/chats/:id", wsHub)
+	router.GET("/chats", listHub)
+	router.POST("/chats", createHub)
+	router.DELETE("/chats/:id", deleteHub)
+}
+
+func Close() {
+	for _, hub := range hubs {
+		hub.close()
+	}
 }
