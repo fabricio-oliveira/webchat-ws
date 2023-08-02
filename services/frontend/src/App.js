@@ -57,7 +57,7 @@ function App() {
   const [messages, setMessages] = useState([])
 
 
-  const onSendMesage = (text) => {
+  const onSendMessage = (text) => {
     socket.send(text)
   }
 
@@ -70,7 +70,7 @@ function App() {
           case CMD_WELCOME:
             const member = { id: payload.params.id, userName: payload.params.name, color, active: true }
             setCurrentMember(member)
-            setMembers([ member,
+            setMembers([member,
               ...(payload.params.users.map(({ name, ...rest }) => ({ ...rest, userName: name, active: true, color: randomColor() })))])
             setMessages((arr) => [
               {
@@ -98,7 +98,7 @@ function App() {
             break;
           case CMD_USER_LEAVE:
             const userId = payload.params.id
-            setMembers((arr) => arr.map(({ id, active, ...rest }) => ({ id, ...rest, active : id !== userId ? active : false })))
+            setMembers((arr) => arr.map(({ id, active, ...rest }) => ({ id, ...rest, active: id !== userId ? active : false })))
             setMessages((arr) => [
               {
                 id: payload.id,
@@ -165,7 +165,7 @@ function App() {
             members={members}
           />
           <Input
-            onSendMessage={onSendMesage}
+            onSendMessage={onSendMessage}
             buttonName="send"
             placeholder="Enter your message and press ENTER"
           />
