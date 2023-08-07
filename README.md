@@ -1,7 +1,8 @@
-# webchat-ws
-  I web chat app in Golang and React using Websocket. 
+# Webchat-ws
 
-
+## Description  
+  Web chat apps in Golang, React, and Websocket. 
+  ![Screenshot-dashboard](https://github.com/fabricio-oliveira/webchat-ws/assets/5975577/40b56ef7-2232-4754-8875-6f0f38f354fa)
 
 ## How to run 
-  The read-me is in progress, for now if you want to run the application run the command `docker-compose up`
+  The readme is in progress, for now, if you want to run the application run the command `docker-compose up
