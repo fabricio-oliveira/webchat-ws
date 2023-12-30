@@ -1,4 +1,4 @@
-const url = `ws://${process.env.REACT_APP_WS_SERVICE}/api/v1/chats/default`
+const url = `${process.env.REACT_APP_WS_SERVICE}/api/v1/chats/default`
 
 function openConnction(userName, {
     onOpen = () => { },
