@@ -4,11 +4,13 @@ services:
     build:
       context: ./services/backend/
       dockerfile: ./build/Dockerfile
+      target: build
     ports:
       - 8080:8080
     volumes:
       - ./services/backend/:/app
     restart: on-failure
+    command: air -c .air.toml
     networks:
       - ws_chat
   frontend:
