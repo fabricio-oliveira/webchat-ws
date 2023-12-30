@@ -121,7 +121,7 @@ function App() {
               }, ...arr.slice(0, MAX_MESSAGES)])
             break;
           default:
-            console.log("command not found", payload.command)
+            console.error("command not found", payload.command)
         }
       }
 

@@ -25,7 +25,6 @@ const colors = [
 
 export function randomColor() {
     const idx =  Math.floor(Math.random() * colors.length)
-    console.log("colors", colors.length, idx, colors[idx])
     return colors[idx]
   }
   
