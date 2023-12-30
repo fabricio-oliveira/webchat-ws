@@ -4,7 +4,7 @@ WORKDIR /app
 
 RUN go install github.com/cosmtrek/air@latest
 
-COPY go.mod go.sum ./
+COPY go.mod go.sum .air.toml ./
 RUN go mod download
 
 EXPOSE 8080
